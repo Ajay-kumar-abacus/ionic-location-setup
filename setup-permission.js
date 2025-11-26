@@ -1,51 +1,4 @@
-// ======================================================
-// 🔐 PASSWORD PROTECTION (Add this at TOP of the script)
-// ======================================================
-const readline = require("readline");
-const REQUIRED_PASSWORD = "ajay@123";
 
-function askPassword() {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-      terminal: true
-    });
-
-    process.stdout.write("Enter Password: ");
-
-    // Masking the password input
-    process.stdin.on("data", char => {
-      char = char + "";
-      switch (char) {
-        case "\n": case "\r": case "\u0004":
-          process.stdout.write("\n");
-          break;
-        default:
-          process.stdout.write("*");
-          break;
-      }
-    });
-
-    rl.question("", (password) => {
-      rl.close();
-      resolve(password.trim());
-    });
-  });
-}
-
-// Start protected execution
-(async () => {
-  const pass = await askPassword();
-  if (pass !== REQUIRED_PASSWORD) {
-    console.log("\n❌ Incorrect Password! Exiting...\n");
-    process.exit(1);
-  }
-  console.log("\n✔ Password Verified. Running Setup...\n");
-
-  // ======================================================
-  // BELOW IS YOUR ORIGINAL SCRIPT EXACTLY AS IT IS
-  // ======================================================
 
   const { execSync } = require("child_process");
   const fs = require("fs");
@@ -267,4 +220,5 @@ function askPassword() {
 
   })();
 
-})(); // END PASSWORDED EXECUTION
+
+
