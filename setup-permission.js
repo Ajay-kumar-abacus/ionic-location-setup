@@ -142,11 +142,16 @@ console.log("➡ Copying permission page from GitHub...");
   );
 
   // Replace platform.ready().then()
-  const readyRegex = /this\.platform\.ready\([\s\S]*?bind\(this\)\)\)/g;
-  if (readyRegex.test(code)) {
-    code = code.replace(readyRegex, "this.startTracking()");
-    console.log("✔ Replaced platform.ready().then(...)");
-  }
+// Replace platform.ready().then(this.configureBackgroundGeolocation.bind(this))
+const readyRegex = /this\.platform\.ready\(\)\s*\.then\(\s*this\.configureBackgroundGeolocation\.bind\(this\)\s*\)/g;
+
+if (readyRegex.test(code)) {
+  code = code.replace(readyRegex, "this.startTracking()");
+  console.log("✔ Replaced platform.ready().then(this.configureBackgroundGeolocation.bind(this))");
+} else {
+  console.log("⚠️ No match found for platform.ready() pattern");
+}
+
 
   // Insert startTracking
   const newStart = `
@@ -267,5 +272,6 @@ console.log("             🚀 Developed by GENUINE AJAY 🚀");
 console.log("===============================================");
 console.log("============================================\n");
 })();
+
 
 
