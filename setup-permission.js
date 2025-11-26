@@ -179,13 +179,11 @@ console.log("➡ Copying permission page from GitHub...");
   }
 `;
 
-  if (!code.includes("startTracking(")) {
+ 
     const lastCurly = code.lastIndexOf("}");
     code = code.slice(0, lastCurly) + startTrackFn + "\n}" + code.slice(lastCurly + 1);
     console.log("✔ Added startTracking() at bottom");
-  } else {
-    console.log("✔ startTracking() already exists — skipped");
-  }
+ 
 
   fs.writeFileSync(DASHBOARD_FILE, code, "utf8");
   console.log("🎉 dashboard.ts updated successfully!");
@@ -264,3 +262,4 @@ console.log("➡ Copying permission page from GitHub...");
   console.log(" 🚀 Developed by GENUINE AJAY 🚀");
   console.log("===============================================\n");
 })();
+
