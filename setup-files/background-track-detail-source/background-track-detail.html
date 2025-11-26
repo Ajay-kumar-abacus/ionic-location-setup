@@ -1,0 +1,200 @@
+<ion-header>
+  <ion-navbar class="track-navbar">
+    <button ion-button menuToggle>
+      <ion-icon name="menu"></ion-icon>
+    </button>
+    <ion-title>{{ userData.name || 'Tracking' }}</ion-title>
+    <ion-buttons end>
+      <button ion-button icon-only (click)="refresh(TabType)">
+        <ion-icon name="refresh"></ion-icon>
+      </button>
+    </ion-buttons>
+  </ion-navbar>
+</ion-header>
+
+<ion-content class="track-content">
+  
+  <!-- Time Section with Start/Stop -->
+  <div class="time-section">
+    <div class="time-card">
+      <div class="time-item start-time">
+        <ion-icon name="log-in"></ion-icon>
+        <div class="time-content">
+          <span class="time-label">Start Time</span>
+          <span class="time-value">{{ attendanceData.start_time }}</span>
+          <span class="time-date">{{ attendanceData.start_time_date | date:'dd MMM yyyy' }}</span>
+        </div>
+      </div>
+      <div class="time-divider"></div>
+      <div class="time-item end-time">
+        <ion-icon name="log-out"></ion-icon>
+        <div class="time-content">
+          <span class="time-label">Stop Time</span>
+          <span class="time-value">{{ attendanceData.stop_time }}</span>
+          <span class="time-date">{{ attendanceData.stop_time_date | date:'dd MMM yyyy' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="quick-stats">
+    <div class="stat-card">
+      <div class="stat-icon nav-icon">
+        <ion-icon name="navigate"></ion-icon>
+      </div>
+      <div class="stat-details">
+        <span class="stat-label">Distance</span>
+        <span class="stat-value">{{ distance }} <span class="unit">km</span></span>
+      </div>
+    </div>
+    
+    <div class="stat-card" [ngClass]="'health-' + getHealthStatusColor()">
+      <div class="stat-icon health-icon">
+        <ion-icon name="heart"></ion-icon>
+      </div>
+      <div class="stat-details">
+        <span class="stat-label">Device Health</span>
+        <span class="stat-value">{{ healthScore }} <span class="unit">%</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-section">
+    <ion-segment [(ngModel)]="TabType" (ionChange)="onTabChange($event)" class="segment-tabs">
+      <ion-segment-button value="Live" class="segment-button">
+        <ion-icon name="pin"></ion-icon>
+        Live
+      </ion-segment-button>
+      <ion-segment-button value="Tracker" class="segment-button">
+        <ion-icon name="git-network"></ion-icon>
+        Route
+      </ion-segment-button>
+      <ion-segment-button value="Health" class="segment-button">
+        <ion-icon name="pulse"></ion-icon>
+        Health
+      </ion-segment-button>
+    </ion-segment>
+  </div>
+
+  <!-- LIVE VIEW -->
+  <div *ngIf="TabType === 'Live'" class="tab-content">
+    <div *ngIf="!noMapData">
+      <div class="location-card">
+        <div class="card-header">
+          <h3>Current Location</h3>
+          <span class="live-badge">
+            <span class="pulse-indicator"></span>Live
+          </span>
+        </div>
+        <div class="location-info">
+          <div class="info-field">
+            <label>Address</label>
+            <p class="info-value">{{ latest_location?.address || latest_location?.gps || 'Unavailable' }}</p>
+          </div>
+          <div class="coordinates-grid">
+            <div class="coord-item">
+              <label>Latitude</label>
+              <span class="coord-value">{{ latest_location?.lat | number:'1.5-5' }}</span>
+            </div>
+            <div class="coord-item">
+              <label>Longitude</label>
+              <span class="coord-value">{{ latest_location?.lng | number:'1.5-5' }}</span>
+            </div>
+          </div>
+          <div class="info-field"><label>Last Updated</label>
+            <p class="info-value">{{ latest_location?.time | date:'dd MMM, hh:mm a' }}</p>
+          </div>
+          <div class="info-field" *ngIf="latest_location?.accuracy"><label>Accuracy</label>
+            <p class="info-value">{{ latest_location?.accuracy }} m</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="map-section" *ngIf="!noMapData">
+      <div id="track-map" class="map-container"></div>
+    </div>
+  </div>
+
+  <div *ngIf="TabType === 'Live' && noMapData" class="no-data-container">
+    <div class="no-data-content">
+      <ion-icon name="compass"></ion-icon>
+      <h3>No Live Location</h3>
+      <p>We couldn't fetch the current location data for this user.</p>
+    </div>
+  </div>
+
+  <!-- ROUTE VIEW -->
+  <div *ngIf="TabType === 'Tracker'" class="tab-content">
+
+    <div class="map-section">
+      <div id="track-map" class="map-container" *ngIf="!noMapData"></div>
+      <div class="no-data-container" *ngIf="noMapData">
+        <div class="no-data-content">
+          <ion-icon name="map"></ion-icon>
+          <p>No Route Data Available</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEALTH VIEW -->
+  <div *ngIf="TabType === 'Health'" class="tab-content">
+    <div class="health-section">
+      <div class="health-score-card" [ngClass]="'health-' + getHealthStatusColor()">
+        <div class="score-circle">
+          <span class="score-value">{{ healthScore }}%</span>
+          <span class="score-status">{{ getHealthStatusText() }}</span>
+        </div>
+      </div>
+
+      <div class="health-details-card">
+        <h4 class="card-title">Device Information</h4>
+        <div class="health-item">
+          <span class="health-label">Device Model</span>
+          <span class="health-value">{{ deviceHealth.device_model }}</span>
+        </div>
+        <div class="health-item">
+          <span class="health-label">Android Version</span>
+          <span class="health-value">v{{ deviceHealth.android_version }} (SDK {{ deviceHealth.sdk_version }})</span>
+        </div>
+        <div class="health-item">
+          <span class="health-label">Battery Level</span>
+          <span class="health-value" [ngClass]="deviceHealth.battery_level < 30 ? 'critical' : ''">{{ deviceHealth.battery_level }}%</span>
+        </div>
+        <div class="health-item">
+          <span class="health-label">Location Permission</span>
+          <span class="health-value" [ngClass]="deviceHealth.has_background_permission ? 'success' : 'error'">
+            {{ deviceHealth.has_background_permission ? 'Enabled' : 'Disabled' }}
+          </span>
+        </div>
+        <div class="health-item">
+          <span class="health-label">Battery Optimization</span>
+          <span class="health-value">{{ deviceHealth.is_battery_optimized ? 'Yes' : 'No' }}</span>
+        </div>
+        <div class="health-item">
+          <span class="health-label">Power Save Mode</span>
+          <span class="health-value" [ngClass]="deviceHealth.is_power_save_mode ? 'warning' : ''">
+            {{ deviceHealth.is_power_save_mode ? 'Active' : 'Off' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="health-details-card" *ngIf="deviceHealth.device_issues">
+        <h4 class="card-title">Issues Detected</h4>
+        <div class="issues-box">
+          {{ deviceHealth.device_issues }}
+        </div>
+      </div>
+
+      <div class="health-details-card" *ngIf="deviceHealth.recommendations">
+        <h4 class="card-title">Recommendations</h4>
+        <div class="recommendations-box">
+          {{ deviceHealth.recommendations }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</ion-content>

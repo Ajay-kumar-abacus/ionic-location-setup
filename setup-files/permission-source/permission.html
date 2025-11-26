@@ -1,0 +1,160 @@
+<!-- permission-status.html -->
+<ion-header>
+  <ion-navbar class="app-navbar">
+    <ion-title class="nav-title">
+      <ion-icon name="checkmark-circle-outline" class="nav-icon"></ion-icon>
+      Permission Manager
+    </ion-title>
+  </ion-navbar>
+</ion-header>
+
+<ion-content class="main-content">
+  
+  <!-- Status Overview -->
+  <div class="status-overview">
+    <div class="overview-card" [ngClass]="allPermissionsGranted ? 'status-success' : 'status-warning'">
+      <div class="overview-content">
+        <ion-icon [name]="allPermissionsGranted ? 'checkmark-circle' : 'alert-circle'" 
+                  class="overview-icon"></ion-icon>
+        <div class="overview-text">
+          <h2 class="overview-title">{{allPermissionsGranted ? 'All Set!' : 'Action Required'}}</h2>
+          <p class="overview-subtitle">
+            {{allPermissionsGranted ? 'All permissions configured correctly' : 'Some permissions need attention'}}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permission Items -->
+  <div class="permission-list">
+    
+    <!-- Location Permission -->
+    <ion-card class="perm-card" [ngClass]="permissions.location ? 'card-granted' : 'card-required'">
+      <div class="card-header">
+        <div class="perm-icon-box" [ngClass]="permissions.location ? 'icon-success' : 'icon-error'">
+          <ion-icon name="locate"></ion-icon>
+        </div>
+        <div class="perm-content">
+          <h3 class="perm-title">Location Access</h3>
+          <p class="perm-desc">GPS location services</p>
+        </div>
+        <div class="perm-status">
+          <span class="status-badge" [ngClass]="permissions.location ? 'badge-granted' : 'badge-required'">
+            {{permissions.location ? 'Granted' : 'Required'}}
+          </span>
+        </div>
+      </div>
+      
+      <ion-card-content class="card-body" *ngIf="!permissions.location">
+        <p class="action-text">Location access is needed for accurate tracking functionality.</p>
+        <button ion-button class="action-btn btn-primary" (click)="fixLocationPermission()">
+         
+          Grant Permission
+        </button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Background Location Permission -->
+    <ion-card class="perm-card" [ngClass]="permissions.backgroundLocation ? 'card-granted' : 'card-required'">
+      <div class="card-header">
+        <div class="perm-icon-box" [ngClass]="permissions.backgroundLocation ? 'icon-success' : 'icon-error'">
+          <ion-icon name="time"></ion-icon>
+        </div>
+        <div class="perm-content">
+          <h3 class="perm-title">Background Location</h3>
+          <p class="perm-desc">Always allow location access</p>
+        </div>
+        <div class="perm-status">
+          <span class="status-badge" [ngClass]="permissions.backgroundLocation ? 'badge-granted' : 'badge-required'">
+            {{permissions.backgroundLocation ? 'Granted' : 'Required'}}
+          </span>
+        </div>
+      </div>
+      
+      <ion-card-content class="card-body" *ngIf="!permissions.backgroundLocation">
+        <p class="action-text">Background location enables continuous tracking when app is not active.</p>
+        <button ion-button class="action-btn btn-primary" (click)="fixBackgroundPermission()">
+         
+          Enable Background Access
+        </button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Battery Optimization -->
+    <ion-card class="perm-card" [ngClass]="!deviceSettings.isBatteryOptimized ? 'card-granted' : 'card-required'">
+      <div class="card-header">
+        <div class="perm-icon-box" [ngClass]="!deviceSettings.isBatteryOptimized ? 'icon-success' : 'icon-error'">
+          <ion-icon name="battery-charging"></ion-icon>
+        </div>
+        <div class="perm-content">
+          <h3 class="perm-title">Battery Optimization</h3>
+          <p class="perm-desc">Unrestricted battery usage</p>
+        </div>
+        <div class="perm-status">
+          <span class="status-badge" [ngClass]="!deviceSettings.isBatteryOptimized ? 'badge-granted' : 'badge-required'">
+            {{!deviceSettings.isBatteryOptimized ? 'Optimized' : 'Needs Fix'}}
+          </span>
+        </div>
+      </div>
+      
+      <ion-card-content class="card-body" *ngIf="deviceSettings.isBatteryOptimized">
+        <p class="action-text">Disable battery optimization to ensure background services run smoothly.</p>
+        <button ion-button class="action-btn btn-primary" (click)="fixBatteryOptimization()">
+         
+          Disable Optimization
+        </button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- GPS Services -->
+    <ion-card class="perm-card" [ngClass]="deviceSettings.isLocationEnabled ? 'card-granted' : 'card-required'">
+      <div class="card-header">
+        <div class="perm-icon-box" [ngClass]="deviceSettings.isLocationEnabled ? 'icon-success' : 'icon-error'">
+          <ion-icon name="navigate"></ion-icon>
+        </div>
+        <div class="perm-content">
+          <h3 class="perm-title">GPS Services</h3>
+          <p class="perm-desc">System location services</p>
+        </div>
+        <div class="perm-status">
+          <span class="status-badge" [ngClass]="deviceSettings.isLocationEnabled ? 'badge-granted' : 'badge-required'">
+            {{deviceSettings.isLocationEnabled ? 'Enabled' : 'Disabled'}}
+          </span>
+        </div>
+      </div>
+      
+      <ion-card-content class="card-body" *ngIf="!deviceSettings.isLocationEnabled">
+        <p class="action-text">Enable GPS location services in your device settings.</p>
+        <button ion-button class="action-btn btn-primary" (click)="openLocationSettings()">
+         
+          Open Settings
+        </button>
+      </ion-card-content>
+    </ion-card>
+
+  </div>
+
+  <!-- Control Panel -->
+  <div class="control-panel">
+    <div class="control-grid">
+      <button ion-button class="control-btn btn-secondary" (click)="refreshStatus()">
+        <ion-icon name="refresh" style="margin-right: 10px;"></ion-icon>
+        <span> Refresh Status</span>
+      </button>
+      
+      <button ion-button class="control-btn btn-success" 
+              [disabled]="!allPermissionsGranted" 
+              (click)="startTracking()">
+        <ion-icon name="play" style="margin-right: 10px;"></ion-icon>
+        <span> Start Tracking</span>
+      </button>
+      
+      <button ion-button class="control-btn btn-danger" (click)="stopTracking()">
+        <ion-icon name="square" style="margin-right: 10px;"></ion-icon>
+        <span> Stop Tracking</span>
+      </button>
+    </div>
+  </div>
+
+</ion-content>
