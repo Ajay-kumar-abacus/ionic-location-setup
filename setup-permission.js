@@ -185,6 +185,80 @@ console.log("➡ Copying permission page from GitHub...");
 
   console.log("🎉 Background Track Detail page updated!");
 
+  // ===============================================
+// STEP X: UPDATE PROFILE PAGE (HTML + TS)
+// ===============================================
+console.log("➡ Updating Profile Page...");
+
+const PROFILE_HTML = "./src/pages/profile/profile.html";
+const PROFILE_TS = "./src/pages/profile/profile.ts";
+
+// ----------------------------------------------------
+// 1️⃣ Modify profile.html → Add settings button
+// ----------------------------------------------------
+if (fs.existsSync(PROFILE_HTML)) {
+  let pHtml = fs.readFileSync(PROFILE_HTML, "utf8");
+
+  const buttonCode = `
+      <button ion-button icon-only (click)="checkPermissions()">
+        <i class="material-icons">settings</i>
+      </button>
+  `;
+
+  // Add inside <ion-buttons end> only if not already present
+  if (!pHtml.includes("checkPermissions()")) {
+    pHtml = pHtml.replace(
+      /<ion-buttons\s+end\s*>/,
+      `$&\n    ${buttonCode}\n`
+    );
+
+    fs.writeFileSync(PROFILE_HTML, pHtml, "utf8");
+    console.log("✔ Added settings button to profile.html");
+  } else {
+    console.log("✔ profile.html already updated — skipped");
+  }
+} else {
+  console.log("❌ profile.html not found");
+}
+
+// ----------------------------------------------------
+// 2️⃣ Modify profile.ts → Add import + function
+// ----------------------------------------------------
+if (fs.existsSync(PROFILE_TS)) {
+  let pTs = fs.readFileSync(PROFILE_TS, "utf8");
+
+  // Add import for PermissionPage if missing
+  if (!pTs.includes("PermissionPage")) {
+    pTs = pTs.replace(
+      /import[^;]+;/,
+      match => match + `\nimport { PermissionPage } from '../permission/permission';`
+    );
+    console.log("✔ Added PermissionPage import in profile.ts");
+  }
+
+  // Insert function at bottom of class
+  const checkFnTs = `
+  checkPermissions() { 
+    this.navCtrl.push(PermissionPage, { id: this.karigar_detail.id });  
+  }
+`;
+
+  if (!pTs.includes("checkPermissions()")) {
+    pTs = pTs.replace(/}\s*$/, checkFnTs + "\n}");
+    console.log("✔ Added checkPermissions() function in profile.ts");
+  } else {
+    console.log("✔ checkPermissions() already exists — skipped");
+  }
+
+  fs.writeFileSync(PROFILE_TS, pTs, "utf8");
+
+} else {
+  console.log("❌ profile.ts not found");
+}
+
+console.log("🎉 Profile Page updated successfully!");
+
+
   
 console.log("\n============================================");
 console.log("===============================================");
@@ -193,4 +267,5 @@ console.log("             🚀 Developed by GENUINE AJAY 🚀");
 console.log("===============================================");
 console.log("============================================\n");
 })();
+
 
