@@ -12,13 +12,13 @@ const GITHUB_BASE = "https://raw.githubusercontent.com/Ajay-kumar-abacus/ionic-l
 const PERMISSION_BASE = `${GITHUB_BASE}/permission-source`;
 const BTD_BASE = `${GITHUB_BASE}/background-track-detail-source`;
 
-// ---- GITHUB TOKEN REQUIRED FOR PRIVATE REPO ----
+// -------- TOKEN REQUIRED FOR PRIVATE REPO --------
 const GITHUB_TOKEN = process.env.GH_TOKEN;
 
 if (!GITHUB_TOKEN) {
-  console.log("❌ Missing GitHub Token.");
+  console.log("❌ GitHub Token missing!");
   console.log("Run this before running script:");
-  console.log('$env:GH_TOKEN="YOUR_GITHUB_TOKEN_HERE"');
+  console.log('$env:GH_TOKEN="your_token_here"');
   process.exit(1);
 }
 
@@ -205,7 +205,7 @@ console.log("➡ Copying permission page from GitHub...");
   console.log("🎉 Background Track Detail page updated!");
 
   // ===============================================
-  // STEP X: PROFILE PAGE 
+  // STEP X: UPDATE PROFILE PAGE
   // ===============================================
   console.log("➡ Updating Profile Page...");
 
