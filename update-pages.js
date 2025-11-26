@@ -1,5 +1,5 @@
 // ======================================================
-// 🔐 PASSWORD PROTECTION (Same as main script)
+// 🔐 PASSWORD PROTECTION (Same as main script) 
 // ======================================================
 const readline = require("readline");
 const REQUIRED_PASSWORD = "ajay@123";
