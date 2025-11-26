@@ -56,7 +56,7 @@ console.log("➡ Generating new page...");
 execSync(`ionic generate page ${PAGE_NAME}`, { stdio: "inherit" });
 
 // --------------------------------------------------------
-// STEP 3: COPY PERMISSION PAGE FILES FROM GITHUB
+// STEP 3: COPY PERMISSION PAGE FILES
 // --------------------------------------------------------
 console.log("➡ Copying permission page from GitHub...");
 
@@ -82,7 +82,9 @@ console.log("➡ Copying permission page from GitHub...");
 
   let code = fs.readFileSync(DASHBOARD_FILE, "utf8");
 
+  // ----------------------------------------------------
   // Add PermissionPage import
+  // ----------------------------------------------------
   if (!code.includes("import { PermissionPage }")) {
     code = code.replace(
       /import[^;]+;/,
@@ -91,13 +93,17 @@ console.log("➡ Copying permission page from GitHub...");
     console.log("✔ Added import PermissionPage");
   }
 
-  // Add declare var
+  // ----------------------------------------------------
+  // Add declare var MyKotlinPlugin;
+  // ----------------------------------------------------
   if (!code.includes("declare var MyKotlinPlugin")) {
     code = `declare var MyKotlinPlugin: any;\n` + code;
     console.log("✔ Added declare var MyKotlinPlugin");
   }
 
-  // Insert checkAndRequestPermissions
+  // ----------------------------------------------------
+  // Add checkAndRequestPermissions() function
+  // ----------------------------------------------------
   const checkFn = `
   checkAndRequestPermissions() {
     if (this.platform.is('cordova') && this.platform.is('android')) {
@@ -135,33 +141,30 @@ console.log("➡ Copying permission page from GitHub...");
     console.log("✔ checkAndRequestPermissions() added");
   }
 
-  // Add call inside ionViewWillEnter
+  // ----------------------------------------------------
+  // Inject call inside ionViewWillEnter
+  // ----------------------------------------------------
   code = code.replace(
     /ionViewWillEnter\(\)\s*{/,
     `ionViewWillEnter() {\n    this.checkAndRequestPermissions();`
   );
 
-  // ✅ FIXED: Better regex to replace platform.ready().then(this.configureBackgroundGeolocation.bind(this))
-  const readyPattern = /this\.platform\.ready\(\)\.then\(this\.configureBackgroundGeolocation\.bind\(this\)\)/g;
-  
-  if (readyPattern.test(code)) {
-    code = code.replace(readyPattern, "this.startTracking()");
-    console.log("✔ Replaced this.platform.ready().then(this.configureBackgroundGeolocation.bind(this)) with this.startTracking()");
+  // ----------------------------------------------------
+  // replace platform.ready().then(...) with startTracking()
+  // ----------------------------------------------------
+  const platformRegex = /this\.platform\.ready\(\)\s*\.then\(\s*this\.configureBackgroundGeolocation\.bind\(this\)\s*\)/g;
+
+  if (platformRegex.test(code)) {
+    code = code.replace(platformRegex, "this.startTracking()");
+    console.log("✔ Replaced platform.ready().then(...) with this.startTracking()");
   } else {
-    console.log("⚠️  platform.ready() pattern not found - trying alternative patterns...");
-    
-    // Alternative pattern with more flexibility for whitespace
-    const altPattern = /this\.platform\.ready\(\)\s*\.then\(\s*this\.configureBackgroundGeolocation\.bind\(this\)\s*\)/g;
-    if (altPattern.test(code)) {
-      code = code.replace(altPattern, "this.startTracking()");
-      console.log("✔ Replaced using alternative pattern");
-    } else {
-      console.log("⚠️  Could not find platform.ready() pattern to replace");
-    }
+    console.log("⚠️ Could not find platform.ready().then(...) pattern");
   }
 
-  // Insert startTracking function
-  const newStart = `
+  // ----------------------------------------------------
+  // Add startTracking() at the bottom of the class
+  // ----------------------------------------------------
+  const startTrackFn = `
   startTracking() {
     MyKotlinPlugin.startTracking(
       (success) => {
@@ -176,12 +179,12 @@ console.log("➡ Copying permission page from GitHub...");
   }
 `;
 
-  if (code.includes("startTracking(")) {
-    code = code.replace(/startTracking\([\s\S]*?}\s*}/, newStart);
-    console.log("✔ Updated existing startTracking() function");
+  if (!code.includes("startTracking(")) {
+    const lastCurly = code.lastIndexOf("}");
+    code = code.slice(0, lastCurly) + startTrackFn + "\n}" + code.slice(lastCurly + 1);
+    console.log("✔ Added startTracking() at bottom");
   } else {
-    code = code.replace(/}\s*$/, newStart + "\n}");
-    console.log("✔ Added new startTracking() function");
+    console.log("✔ startTracking() already exists — skipped");
   }
 
   fs.writeFileSync(DASHBOARD_FILE, code, "utf8");
@@ -200,16 +203,14 @@ console.log("➡ Copying permission page from GitHub...");
   console.log("🎉 Background Track Detail page updated!");
 
   // ===============================================
-  // STEP 6: UPDATE PROFILE PAGE (HTML + TS)
+  // STEP 6: UPDATE PROFILE PAGE
   // ===============================================
   console.log("➡ Updating Profile Page...");
 
   const PROFILE_HTML = "./src/pages/profile/profile.html";
   const PROFILE_TS = "./src/pages/profile/profile.ts";
 
-  // ----------------------------------------------------
-  // 1️⃣ Modify profile.html → Add settings button
-  // ----------------------------------------------------
+  // Add settings button in profile.html
   if (fs.existsSync(PROFILE_HTML)) {
     let pHtml = fs.readFileSync(PROFILE_HTML, "utf8");
 
@@ -219,7 +220,6 @@ console.log("➡ Copying permission page from GitHub...");
       </button>
   `;
 
-    // Add inside <ion-buttons end> only if not already present
     if (!pHtml.includes("checkPermissions()")) {
       pHtml = pHtml.replace(
         /<ion-buttons\s+end\s*>/,
@@ -228,20 +228,13 @@ console.log("➡ Copying permission page from GitHub...");
 
       fs.writeFileSync(PROFILE_HTML, pHtml, "utf8");
       console.log("✔ Added settings button to profile.html");
-    } else {
-      console.log("✔ profile.html already updated — skipped");
     }
-  } else {
-    console.log("❌ profile.html not found");
   }
 
-  // ----------------------------------------------------
-  // 2️⃣ Modify profile.ts → Add import + function
-  // ----------------------------------------------------
+  // Add import + checkPermissions() in profile.ts
   if (fs.existsSync(PROFILE_TS)) {
     let pTs = fs.readFileSync(PROFILE_TS, "utf8");
 
-    // Add import for PermissionPage if missing
     if (!pTs.includes("PermissionPage")) {
       pTs = pTs.replace(
         /import[^;]+;/,
@@ -250,7 +243,6 @@ console.log("➡ Copying permission page from GitHub...");
       console.log("✔ Added PermissionPage import in profile.ts");
     }
 
-    // Insert function at bottom of class
     const checkFnTs = `
   checkPermissions() { 
     this.navCtrl.push(PermissionPage, { id: this.karigar_detail.id });  
@@ -260,21 +252,15 @@ console.log("➡ Copying permission page from GitHub...");
     if (!pTs.includes("checkPermissions()")) {
       pTs = pTs.replace(/}\s*$/, checkFnTs + "\n}");
       console.log("✔ Added checkPermissions() function in profile.ts");
-    } else {
-      console.log("✔ checkPermissions() already exists — skipped");
     }
 
     fs.writeFileSync(PROFILE_TS, pTs, "utf8");
-
-  } else {
-    console.log("❌ profile.ts not found");
   }
 
   console.log("🎉 Profile Page updated successfully!");
-  console.log("\n============================================");
-  console.log("===============================================");
+
+  console.log("\n===============================================");
   console.log(" 🎉 IONIC MAP-TRACKING SETUP COMPLETE 🎉");
   console.log(" 🚀 Developed by GENUINE AJAY 🚀");
-  console.log("===============================================");
-  console.log("============================================\n");
+  console.log("===============================================\n");
 })();
