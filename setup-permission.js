@@ -184,4 +184,13 @@ console.log("➡ Copying permission page from GitHub...");
   await downloadRaw(`${BTD_BASE}/background-track-detail.module.ts`, `${DEST_BTD}/background-track-detail.module.ts`);
 
   console.log("🎉 Background Track Detail page updated!");
+
+  
+console.log("\n============================================");
+console.log("===============================================");
+console.log("       🎉 IONIC MAP-TRACKING SETUP COMPLETE 🎉");
+console.log("             🚀 Developed by GENUINE AJAY 🚀");
+console.log("===============================================");
+console.log("============================================\n");
 })();
+
