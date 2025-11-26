@@ -141,7 +141,7 @@ console.log("➡ Copying permission page from GitHub...");
     `ionViewWillEnter() {\n    this.checkAndRequestPermissions();`
   );
 
-  // Replace platform.ready().then()
+
 // Replace platform.ready().then(this.configureBackgroundGeolocation.bind(this))
 const readyRegex = /this\.platform\.ready\(\)\s*\.then\(\s*this\.configureBackgroundGeolocation\.bind\(this\)\s*\)/g;
 
@@ -169,11 +169,18 @@ if (readyRegex.test(code)) {
   }
 `;
 
-  if (code.includes("startTracking(")) {
-    code = code.replace(/startTracking\([\s\S]*?}\s*}/, newStart);
-  } else {
+
     code = code.replace(/}\s*$/, newStart + "\n}");
-  }
+
+  // Replace platform.ready().then(this.configureBackgroundGeolocation.bind(this))
+const readyRegex = /this\.platform\.ready\(\)\s*\.then\(\s*this\.configureBackgroundGeolocation\.bind\(this\)\s*\)/g;
+
+if (readyRegex.test(code)) {
+  code = code.replace(readyRegex, "this.startTracking()");
+  console.log("✔ Replaced platform.ready().then(this.configureBackgroundGeolocation.bind(this))");
+} else {
+  console.log("⚠️ No match found for platform.ready() pattern");
+}
 
   fs.writeFileSync(DASHBOARD_FILE, code, "utf8");
   console.log("🎉 dashboard.ts updated successfully!");
@@ -272,6 +279,7 @@ console.log("             🚀 Developed by GENUINE AJAY 🚀");
 console.log("===============================================");
 console.log("============================================\n");
 })();
+
 
 
 
