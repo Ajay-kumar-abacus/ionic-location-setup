@@ -1,3 +1,48 @@
+const readline = require("readline");
+
+// CHANGE PASSWORD HERE
+const REQUIRED_PASSWORD = "ajay@123";  
+
+function askPassword() {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    // Hide typed password
+    process.stdout.write("Enter Password: ");
+    process.stdin.on("data", char => {
+      char = char + "";
+      switch (char) {
+        case "\n":
+        case "\r":
+        case "\u0004":
+          process.stdout.write("\n");
+          break;
+        default:
+          process.stdout.write("*");
+          break;
+      }
+    });
+
+    rl.question(" ", (password) => {
+      rl.close();
+      resolve(password.trim());
+    });
+  });
+}
+
+(async () => {
+  const password = await askPassword();
+
+  if (password !== REQUIRED_PASSWORD) {
+    console.log("\n❌ Incorrect Password! Script Aborted.\n");
+    process.exit(1);
+  }
+
+  console.log("\n✔ Password Verified! Running Setup...\n");
+
 const { execSync } = require("child_process");
 const fs = require("fs");
 const https = require("https");
@@ -270,6 +315,7 @@ console.log("             🚀 Developed by GENUINE AJAY 🚀");
 console.log("===============================================");
 console.log("============================================\n");
 })();
+
 
 
 
