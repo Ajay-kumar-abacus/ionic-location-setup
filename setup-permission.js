@@ -12,6 +12,16 @@ const GITHUB_BASE = "https://raw.githubusercontent.com/Ajay-kumar-abacus/ionic-l
 const PERMISSION_BASE = `${GITHUB_BASE}/permission-source`;
 const BTD_BASE = `${GITHUB_BASE}/background-track-detail-source`;
 
+// ---- GITHUB TOKEN REQUIRED FOR PRIVATE REPO ----
+const GITHUB_TOKEN = process.env.GH_TOKEN;
+
+if (!GITHUB_TOKEN) {
+  console.log("❌ Missing GitHub Token.");
+  console.log("Run this before running script:");
+  console.log('$env:GH_TOKEN="YOUR_GITHUB_TOKEN_HERE"');
+  process.exit(1);
+}
+
 // Destination folders inside Ionic project
 const DEST_PERMISSION = `./src/pages/${PAGE_NAME}`;
 const DEST_BTD = "./src/pages/background-track-detail";
@@ -19,24 +29,32 @@ const DEST_BTD = "./src/pages/background-track-detail";
 // --------------------------------------------------------
 // DOWNLOAD FILE DIRECTLY FROM GITHUB RAW INTO DESTINATION
 // --------------------------------------------------------
-function downloadRaw(url, dest) {
+function downloadRaw(url, dest, token) {
   return new Promise((resolve) => {
-    https.get(url, (resp) => {
-      if (resp.statusCode !== 200) {
-        console.log("❌ Failed:", url);
-        resolve(false);
-        return;
+    https.get(
+      url,
+      {
+        headers: {
+          "User-Agent": "NodeJS",
+          "Authorization": `Bearer ${token}`
+        }
+      },
+      (resp) => {
+        if (resp.statusCode !== 200) {
+          console.log("❌ Failed:", url, " Status:", resp.statusCode);
+          resolve(false);
+          return;
+        }
+
+        let data = "";
+        resp.on("data", chunk => data += chunk);
+        resp.on("end", () => {
+          fs.writeFileSync(dest, data, "utf8");
+          console.log("✔ Copied:", dest);
+          resolve(true);
+        });
       }
-
-      let data = "";
-      resp.on("data", chunk => data += chunk);
-      resp.on("end", () => {
-        fs.writeFileSync(dest, data, "utf8");
-        console.log("✔ Copied:", dest);
-        resolve(true);
-      });
-
-    }).on("error", err => {
+    ).on("error", err => {
       console.log("❌ Error downloading:", url, err.message);
       resolve(false);
     });
@@ -61,10 +79,11 @@ execSync(`ionic generate page ${PAGE_NAME}`, { stdio: "inherit" });
 console.log("➡ Copying permission page from GitHub...");
 
 (async () => {
-  await downloadRaw(`${PERMISSION_BASE}/permission.html`, `${DEST_PERMISSION}/permission.html`);
-  await downloadRaw(`${PERMISSION_BASE}/permission.ts`, `${DEST_PERMISSION}/permission.ts`);
-  await downloadRaw(`${PERMISSION_BASE}/permission.scss`, `${DEST_PERMISSION}/permission.scss`);
-  await downloadRaw(`${PERMISSION_BASE}/permission.module.ts`, `${DEST_PERMISSION}/permission.module.ts`);
+
+  await downloadRaw(`${PERMISSION_BASE}/permission.html`, `${DEST_PERMISSION}/permission.html`, GITHUB_TOKEN);
+  await downloadRaw(`${PERMISSION_BASE}/permission.ts`, `${DEST_PERMISSION}/permission.ts`, GITHUB_TOKEN);
+  await downloadRaw(`${PERMISSION_BASE}/permission.scss`, `${DEST_PERMISSION}/permission.scss`, GITHUB_TOKEN);
+  await downloadRaw(`${PERMISSION_BASE}/permission.module.ts`, `${DEST_PERMISSION}/permission.module.ts`, GITHUB_TOKEN);
 
   console.log("🎉 Permission page setup completed!");
 
@@ -178,86 +197,67 @@ console.log("➡ Copying permission page from GitHub...");
   // ===============================================
   console.log("➡ Updating Background Track Detail page from GitHub...");
 
-  await downloadRaw(`${BTD_BASE}/background-track-detail.html`, `${DEST_BTD}/background-track-detail.html`);
-  await downloadRaw(`${BTD_BASE}/background-track-detail.ts`, `${DEST_BTD}/background-track-detail.ts`);
-  await downloadRaw(`${BTD_BASE}/background-track-detail.scss`, `${DEST_BTD}/background-track-detail.scss`);
-  await downloadRaw(`${BTD_BASE}/background-track-detail.module.ts`, `${DEST_BTD}/background-track-detail.module.ts`);
+  await downloadRaw(`${BTD_BASE}/background-track-detail.html`, `${DEST_BTD}/background-track-detail.html`, GITHUB_TOKEN);
+  await downloadRaw(`${BTD_BASE}/background-track-detail.ts`, `${DEST_BTD}/background-track-detail.ts`, GITHUB_TOKEN);
+  await downloadRaw(`${BTD_BASE}/background-track-detail.scss`, `${DEST_BTD}/background-track-detail.scss`, GITHUB_TOKEN);
+  await downloadRaw(`${BTD_BASE}/background-track-detail.module.ts`, `${DEST_BTD}/background-track-detail.module.ts`, GITHUB_TOKEN);
 
   console.log("🎉 Background Track Detail page updated!");
 
   // ===============================================
-// STEP X: UPDATE PROFILE PAGE (HTML + TS)
-// ===============================================
-console.log("➡ Updating Profile Page...");
+  // STEP X: PROFILE PAGE 
+  // ===============================================
+  console.log("➡ Updating Profile Page...");
 
-const PROFILE_HTML = "./src/pages/profile/profile.html";
-const PROFILE_TS = "./src/pages/profile/profile.ts";
+  const PROFILE_HTML = "./src/pages/profile/profile.html";
+  const PROFILE_TS = "./src/pages/profile/profile.ts";
 
-// ----------------------------------------------------
-// 1️⃣ Modify profile.html → Add settings button
-// ----------------------------------------------------
-if (fs.existsSync(PROFILE_HTML)) {
-  let pHtml = fs.readFileSync(PROFILE_HTML, "utf8");
+  if (fs.existsSync(PROFILE_HTML)) {
+    let pHtml = fs.readFileSync(PROFILE_HTML, "utf8");
 
-  const buttonCode = `
+    const buttonCode = `
       <button ion-button icon-only (click)="checkPermissions()">
         <i class="material-icons">settings</i>
       </button>
-  `;
+    `;
 
-  // Add inside <ion-buttons end> only if not already present
-  if (!pHtml.includes("checkPermissions()")) {
-    pHtml = pHtml.replace(
-      /<ion-buttons\s+end\s*>/,
-      `$&\n    ${buttonCode}\n`
-    );
+    if (!pHtml.includes("checkPermissions()")) {
+      pHtml = pHtml.replace(
+        /<ion-buttons\s+end\s*>/,
+        `$&\n    ${buttonCode}\n`
+      );
 
-    fs.writeFileSync(PROFILE_HTML, pHtml, "utf8");
-    console.log("✔ Added settings button to profile.html");
-  } else {
-    console.log("✔ profile.html already updated — skipped");
-  }
-} else {
-  console.log("❌ profile.html not found");
-}
-
-// ----------------------------------------------------
-// 2️⃣ Modify profile.ts → Add import + function
-// ----------------------------------------------------
-if (fs.existsSync(PROFILE_TS)) {
-  let pTs = fs.readFileSync(PROFILE_TS, "utf8");
-
-  // Add import for PermissionPage if missing
-  if (!pTs.includes("PermissionPage")) {
-    pTs = pTs.replace(
-      /import[^;]+;/,
-      match => match + `\nimport { PermissionPage } from '../permission/permission';`
-    );
-    console.log("✔ Added PermissionPage import in profile.ts");
+      fs.writeFileSync(PROFILE_HTML, pHtml, "utf8");
+      console.log("✔ Added settings button to profile.html");
+    }
   }
 
-  // Insert function at bottom of class
-  const checkFnTs = `
+  if (fs.existsSync(PROFILE_TS)) {
+    let pTs = fs.readFileSync(PROFILE_TS, "utf8");
+
+    if (!pTs.includes("PermissionPage")) {
+      pTs = pTs.replace(
+        /import[^;]+;/,
+        match => match + `\nimport { PermissionPage } from '../permission/permission';`
+      );
+      console.log("✔ Added PermissionPage import in profile.ts");
+    }
+
+    const checkFnTs = `
   checkPermissions() { 
     this.navCtrl.push(PermissionPage, { id: this.karigar_detail.id });  
   }
 `;
 
-  if (!pTs.includes("checkPermissions()")) {
-    pTs = pTs.replace(/}\s*$/, checkFnTs + "\n}");
-    console.log("✔ Added checkPermissions() function in profile.ts");
-  } else {
-    console.log("✔ checkPermissions() already exists — skipped");
+    if (!pTs.includes("checkPermissions()")) {
+      pTs = pTs.replace(/}\s*$/, checkFnTs + "\n}");
+      console.log("✔ Added checkPermissions() function in profile.ts");
+    }
+
+    fs.writeFileSync(PROFILE_TS, pTs, "utf8");
   }
 
-  fs.writeFileSync(PROFILE_TS, pTs, "utf8");
-
-} else {
-  console.log("❌ profile.ts not found");
-}
-
-console.log("🎉 Profile Page updated successfully!");
-
+  console.log("🎉 Profile Page updated successfully!");
 
   
 console.log("\n============================================");
@@ -266,6 +266,5 @@ console.log("       🎉 IONIC MAP-TRACKING SETUP COMPLETE 🎉");
 console.log("             🚀 Developed by GENUINE AJAY 🚀");
 console.log("===============================================");
 console.log("============================================\n");
+
 })();
-
-
